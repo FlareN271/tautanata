@@ -42,6 +42,7 @@
     </div>
     <nav id="nav" class="nav"></nav>
     <div class="side-foot">
+      <button class="nav-item" data-type="bantuan"><span class="ic" data-i="help"></span><span class="nav-label">Bantuan</span></button>
       <button id="settingsBtn" class="nav-item"><span class="ic" data-i="gear"></span><span class="nav-label">Pengaturan</span></button>
     </div>
   </aside>
@@ -51,7 +52,7 @@
     <header class="bar">
       <div class="bar-row">
         <button id="menuBtn" class="icon-btn only-mobile" aria-label="Menu"><span class="ic" data-i="menu"></span></button>
-        <h1 id="viewTitle" class="view-title">Semua tautan</h1>
+        <h1 id="viewTitle" class="view-title">Beranda</h1>
         <div class="bar-actions">
           <button id="syncBtn" class="icon-btn" title="Sinkron"><span class="ic" data-i="sync"></span></button>
           <button id="addBtn" class="btn primary"><span class="ic" data-i="plus"></span><span class="hide-xs">Tambah</span></button>
@@ -63,27 +64,44 @@
           <input id="q" type="search" placeholder="Cari judul, tag, catatan…" autocomplete="off" enterkeyhint="search">
           <kbd class="hide-xs">/</kbd>
         </div>
-        <select id="sort" class="select" aria-label="Urutkan">
-          <option value="baru">Terbaru</option>
-          <option value="lama">Terlama</option>
-          <option value="judul">Judul A–Z</option>
-          <option value="domain">Situs</option>
-        </select>
-        <div class="seg" role="group" aria-label="Tampilan">
-          <button data-view="list" class="seg-btn" title="Daftar"><span class="ic" data-i="list"></span></button>
-          <button data-view="grid" class="seg-btn" title="Kartu"><span class="ic" data-i="grid"></span></button>
+        <div id="listTools" class="list-tools">
+          <select id="sort" class="select" aria-label="Urutkan">
+            <option value="baru">Baru ditambahkan</option>
+            <option value="diubah">Terakhir diubah</option>
+            <option value="lama">Terlama</option>
+            <option value="judul">Judul A–Z</option>
+            <option value="domain">Situs</option>
+          </select>
+          <div class="seg" role="group" aria-label="Tampilan">
+            <button data-view="list" class="seg-btn" title="Daftar"><span class="ic" data-i="list"></span></button>
+            <button data-view="grid" class="seg-btn" title="Kartu"><span class="ic" data-i="grid"></span></button>
+          </div>
+          <button id="selectBtn" class="btn ghost" title="Pilih beberapa tautan"><span class="ic" data-i="check"></span><span class="hide-xs">Pilih</span></button>
         </div>
       </div>
     </header>
 
     <div id="notice" class="notice" hidden></div>
+    <div id="ctxbar" class="ctxbar" hidden></div>
+    <section id="content" hidden></section>
     <section id="list" class="list"></section>
     <div id="empty" class="empty" hidden></div>
     <button id="moreBtn" class="btn more" hidden>Tampilkan lebih banyak</button>
   </main>
 </div>
 
-<!-- ===== Dialog tambah / ubah ===== -->
+<!-- ===== Bilah edit massal ===== -->
+<div id="bulkbar" class="bulkbar" hidden>
+  <span id="bulkCount" class="bulk-count">0 dipilih</span>
+  <button id="bulkAll" class="btn ghost">Semua</button>
+  <span class="grow"></span>
+  <button id="bulkEdit" class="btn"><span class="ic" data-i="edit"></span><span class="hide-xs">Ubah</span></button>
+  <button id="bulkSesi" class="btn"><span class="ic" data-i="layers"></span><span class="hide-xs">Jadikan sesi</span></button>
+  <button id="bulkDel" class="btn danger"><span class="ic" data-i="trash"></span></button>
+  <button id="bulkClose" class="icon-btn" title="Selesai memilih"><span class="ic" data-i="x"></span></button>
+</div>
+
+<!-- ===== Dialog tambah / ubah tautan ===== -->
 <dialog id="dlg" class="dlg">
   <form id="form" method="dialog">
     <div class="dlg-head">
@@ -96,9 +114,8 @@
     <label>Judul <input id="fJudul" class="field" placeholder="Kosongkan → diambil otomatis"></label>
     <div class="grid2">
       <label>Koleksi <input id="fKoleksi" class="field" list="koleksiList" placeholder="Otomatis"></label>
-      <label>Tag <input id="fTags" class="field" placeholder="pisahkan dengan koma"></label>
+      <label>Tag <input id="fTags" class="field" list="tagList" placeholder="pisahkan dengan koma"></label>
     </div>
-    <datalist id="koleksiList"></datalist>
     <p class="hint" id="fHint"></p>
     <div class="toggles">
       <label class="toggle"><input type="checkbox" id="fFav"><span><span class="ic" data-i="star"></span>Favorit</span></label>
@@ -109,11 +126,113 @@
       <label>Deskripsi <textarea id="fDesk" class="field" rows="2" placeholder="Opsional — diambil otomatis bila kosong"></textarea></label>
       <label>URL gambar sampul <input id="fGambar" class="field" inputmode="url" placeholder="Opsional — diambil otomatis bila kosong"></label>
     </details>
+    <div id="fDates" class="dates" hidden></div>
     <div class="dlg-actions">
       <button type="button" id="delBtn" class="btn danger" hidden>Hapus</button>
       <span class="grow"></span>
       <button type="button" class="btn" data-close>Batal</button>
       <button type="submit" id="saveBtn" class="btn primary">Simpan</button>
+    </div>
+  </form>
+</dialog>
+<datalist id="koleksiList"></datalist>
+<datalist id="tagList"></datalist>
+
+<!-- ===== Dialog koleksi ===== -->
+<dialog id="kolDlg" class="dlg">
+  <form id="kolForm" method="dialog">
+    <div class="dlg-head">
+      <h2 id="kolTitle">Koleksi baru</h2>
+      <button type="button" class="icon-btn" data-close aria-label="Tutup"><span class="ic" data-i="x"></span></button>
+    </div>
+    <div class="kol-name-row">
+      <input id="kIkon" class="field emoji-field" maxlength="4" placeholder="📁" aria-label="Ikon (emoji)">
+      <input id="kNama" class="field" placeholder="Nama koleksi, mis. Distribusi" required>
+    </div>
+    <div>
+      <div class="label-like">Warna</div>
+      <div id="kWarna" class="swatches"></div>
+    </div>
+    <label>Kata kunci otomatis
+      <input id="kKata" class="field" placeholder="mis. shk, harga konsumen, survei harga"></label>
+    <label>Situs otomatis
+      <input id="kSitus" class="field" placeholder="mis. bps.go.id, kemendag.go.id"></label>
+    <p class="hint">Tautan yang judul/deskripsinya mengandung kata kunci, atau berasal dari situs tersebut, otomatis masuk koleksi ini. Pisahkan dengan koma. Boleh dikosongkan.</p>
+    <p id="kLain" class="hint" hidden></p>
+    <div class="dlg-actions">
+      <button type="button" id="kDel" class="btn danger" hidden>Hapus koleksi</button>
+      <span class="grow"></span>
+      <button type="button" class="btn" data-close>Batal</button>
+      <button type="submit" id="kSave" class="btn primary">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ===== Dialog kelola (urutan) koleksi ===== -->
+<dialog id="kelolaDlg" class="dlg">
+  <div class="dlg-body">
+    <div class="dlg-head">
+      <h2>Kelola koleksi</h2>
+      <button type="button" class="icon-btn" data-close aria-label="Tutup"><span class="ic" data-i="x"></span></button>
+    </div>
+    <p class="hint">Urutan di sini juga menentukan <b>prioritas</b>: jika sebuah tautan cocok dengan beberapa koleksi, ia masuk ke koleksi yang paling atas.</p>
+    <div id="kelolaList" class="kelola-list"></div>
+    <div class="dlg-actions">
+      <button type="button" id="kelolaAdd" class="btn"><span class="ic" data-i="plus"></span>Koleksi baru</button>
+      <span class="grow"></span>
+      <button type="button" class="btn" data-close>Batal</button>
+      <button type="button" id="kelolaSave" class="btn primary">Simpan urutan</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- ===== Dialog sesi kerja ===== -->
+<dialog id="sesiDlg" class="dlg wide">
+  <form id="sesiForm" method="dialog">
+    <div class="dlg-head">
+      <h2 id="sesiTitle">Sesi kerja baru</h2>
+      <button type="button" class="icon-btn" data-close aria-label="Tutup"><span class="ic" data-i="x"></span></button>
+    </div>
+    <div class="kol-name-row">
+      <input id="sIkon" class="field emoji-field" maxlength="4" placeholder="🗂️" aria-label="Ikon (emoji)">
+      <input id="sNama" class="field" placeholder="Nama sesi, mis. SPJ Ubinan" required>
+    </div>
+    <label>Catatan <input id="sCatatan" class="field" placeholder="Opsional, mis. dipakai tiap akhir bulan"></label>
+    <div>
+      <div class="label-like">Tautan dalam sesi <span id="sCount" class="muted"></span></div>
+      <div class="search small-search"><span class="ic" data-i="search"></span><input id="sCari" type="search" placeholder="Cari tautan untuk ditambahkan…" autocomplete="off"></div>
+      <div id="sPick" class="pick-list"></div>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" id="sDel" class="btn danger" hidden>Hapus sesi</button>
+      <span class="grow"></span>
+      <button type="button" class="btn" data-close>Batal</button>
+      <button type="submit" id="sSaveBtn" class="btn primary">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ===== Dialog edit massal ===== -->
+<dialog id="bulkDlg" class="dlg">
+  <form id="bulkForm" method="dialog">
+    <div class="dlg-head">
+      <h2 id="bulkTitle">Ubah tautan terpilih</h2>
+      <button type="button" class="icon-btn" data-close aria-label="Tutup"><span class="ic" data-i="x"></span></button>
+    </div>
+    <label>Pindahkan ke koleksi
+      <select id="bKoleksi" class="field"></select></label>
+    <div class="grid2">
+      <label>Tambah tag <input id="bTambah" class="field" list="tagList" placeholder="pisahkan dengan koma"></label>
+      <label>Hapus tag <input id="bHapus" class="field" list="tagList" placeholder="pisahkan dengan koma"></label>
+    </div>
+    <div class="grid2">
+      <label>Favorit <select id="bFav" class="field"><option value="">Tidak diubah</option><option value="1">Jadikan favorit</option><option value="0">Hapus dari favorit</option></select></label>
+      <label>Baca nanti <select id="bLater" class="field"><option value="">Tidak diubah</option><option value="1">Tandai baca nanti</option><option value="0">Tandai sudah dibaca</option></select></label>
+    </div>
+    <div class="dlg-actions">
+      <span class="grow"></span>
+      <button type="button" class="btn" data-close>Batal</button>
+      <button type="submit" id="bSave" class="btn primary">Terapkan</button>
     </div>
   </form>
 </dialog>
@@ -131,7 +250,7 @@
     <hr>
     <h3>Perawatan</h3>
     <div class="stack">
-      <button id="sRetag" class="btn">Terapkan ulang aturan auto-tag</button>
+      <button id="sRetag" class="btn">Terapkan ulang aturan otomatis</button>
       <button id="sImg" class="btn">Lengkapi gambar sampul</button>
       <a id="sSheet" class="btn" target="_blank" rel="noopener" hidden>Buka Google Sheet (aturan & data)</a>
       <span id="sMaint" class="small muted"></span>
@@ -141,6 +260,22 @@
     <div class="row"><button id="sCsv" class="btn">Unduh CSV</button><button id="sJson" class="btn">Unduh JSON</button></div>
     <hr>
     <div class="row"><button id="sLogout" class="btn danger">Putuskan perangkat ini</button><span class="grow"></span><span class="small muted" id="sVer"></span></div>
+  </div>
+</dialog>
+
+<!-- ===== Tur pengenalan ===== -->
+<dialog id="tourDlg" class="dlg tour">
+  <div class="tour-body">
+    <div id="tourArt" class="tour-art"></div>
+    <h2 id="tourTitle"></h2>
+    <p id="tourText" class="muted"></p>
+    <div id="tourDots" class="tour-dots"></div>
+    <div class="dlg-actions">
+      <button type="button" id="tourSkip" class="btn ghost">Lewati</button>
+      <span class="grow"></span>
+      <button type="button" id="tourBack" class="btn">Kembali</button>
+      <button type="button" id="tourNext" class="btn primary">Lanjut</button>
+    </div>
   </div>
 </dialog>
 

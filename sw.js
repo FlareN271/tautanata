@@ -1,5 +1,5 @@
 /* Tautanata service worker: membuat aplikasi bisa dipasang & tetap terbuka saat offline. */
-const CACHE = 'tautanata-v0.2.0';
+const CACHE = 'tautanata-v0.3.0';
 const SHELL = ['./', './index.html', './app.js', './style.css', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/favicon.svg'];
 
